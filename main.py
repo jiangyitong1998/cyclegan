@@ -270,7 +270,8 @@ def train_discriminator_A(optimizer_A,optimazer_B, real_A,fake_A,real_B, fake_B,
     # Calculate error and backpropagate
     error_fake_A = loss(prediction_fake_A, zeros_target(N)) * 0.5
     #error_fake_B = loss(prediction_fake_B, zeros_target(N))
-    error_fake_A.backward()
+    error = error_fake_A+error_real_A
+    error.backward()
     #error_fake_B.backward()
     # 1.3 Update weights with gradients
     optimizer_A.step()
@@ -301,7 +302,8 @@ def train_discriminator_B(optimizer_A,optimazer_B, real_A,fake_A,real_B, fake_B,
     #error_fake_A = loss(prediction_fake_A, zeros_target(N))
     error_fake_B = loss(prediction_fake_B, zeros_target(N))*0.5
     #error_fake_A.backward()
-    error_fake_B.backward()
+    error = error_fake_B + error_real_B
+    error.backward()
 
     # 1.3 Update weights with gradients
     #optimizer_A.step()
