@@ -12,38 +12,37 @@ import numpy as np
 
 from torchvision import transforms, datasets
 
-def mnist_data():
-    compose = transforms.Compose(
-        [transforms.ToTensor(),
-         transforms.Normalize((.5, .5, .5), (.5, .5, .5))
-        ])
-    out_dir = './dataset'
-    return datasets.MNIST(root=out_dir, train=True, transform=compose, download=True)
+# def mnist_data():
+#     compose = transforms.Compose(
+#         [transforms.ToTensor(),
+#          transforms.Normalize((.5, .5, .5), (.5, .5, .5))
+#         ])
+#     out_dir = './dataset'
+#     return datasets.MNIST(root=out_dir, train=True, transform=compose, download=True)
 
-
-# Load data
-data = mnist_data()
-# Create loader with data, so that we can iterate over it
-data_loader = torch.utils.data.DataLoader(data, batch_size=100, shuffle=True)
-# Num batches
-num_batches = len(data_loader)
+# # Load data
+# data = mnist_()
+# # Create loader with data, so that we can iterate over it
+# data_loader = torch.utils.data.DataLoader(data, batch_size=100, shuffle=True)
+# # Num batches
+# num_batches = len(data_loader)
 def load_data():
     # images_A = scipy.io.loadmat('./CT-MRI_data/CT/CT.mat')
     # images_A = images_A['data']
-    path, dirs, files = os.walk("./CT-MRI_data/MRI").__next__()
+    path, dirs, files = os.walk("./dataset/MRI").__next__()
     file_count = len(files)
     images_B = []
     for i in range(file_count):
-        image= scipy.io.loadmat('./CT-MRI_data/MRI/'+files[i])
+        image= scipy.io.loadmat('./dataset/MRI/'+files[i])
         image = image['data']
         images_B.append(image)
 
     images_B=np.array(images_B)
-    path, dirs, files = os.walk("./CT-MRI_data/CT").__next__()
+    path, dirs, files = os.walk("./dataset/CT").__next__()
     file_count = len(files)
     images_A = []
     for i in range(file_count):
-        image= scipy.io.loadmat('./CT-MRI_data/CT/'+files[i])
+        image= scipy.io.loadmat('./dataset/CT/'+files[i])
         image = image['data']
         images_A.append(image)
     # images_A=np.swapaxes(images_A, 0, 2)
