@@ -582,7 +582,7 @@ for epoch in range(num_epochs):
             #     d_error, g_error, d_pred_real, d_pred_fake
             # )
 
-    if (epoch is 49) or (epoch is 9) or (epoch is 19):
+    if epoch is 40:
         fake_B = generator_B(real_A)
         for i in range(20):
             print(fake_B[i].data.numpy())
