@@ -4,7 +4,7 @@ from torch.autograd.variable import Variable
 import os
 from model import Generater
 import scipy.io
-import cv2
+
 from PIL import Image
 
 import numpy as np
@@ -32,11 +32,11 @@ from torchvision import transforms, datasets
 def load_data():
     # images_A = scipy.io.loadmat('./CT-MRI_data/CT/CT.mat')
     # images_A = images_A['data']
-    path, dirs, files = os.walk("./CT-MRI_data/MRI").__next__()
+    path, dirs, files = os.walk("./dataset/MRI").__next__()
     file_count = len(files)
     images_B = []
     for i in range(file_count):
-        image= scipy.io.loadmat('./CT-MRI_data/MRI/'+files[i])
+        image= scipy.io.loadmat('./dataset/MRI/'+files[i])
         image = image['data']
 
         image = np.hstack([image, np.zeros([511, 53])])
@@ -47,12 +47,12 @@ def load_data():
         images_B.append(image)
 
     images_B=np.array(images_B)
-    path, dirs, files = os.walk("./CT-MRI_data/CT").__next__()
+    path, dirs, files = os.walk("./dataset/CT").__next__()
     file_count = len(files)
     images_A = []
 
     for i in range(file_count):
-        image= scipy.io.loadmat('./CT-MRI_data/CT/'+files[i])
+        image= scipy.io.loadmat('./dataset/CT/'+files[i])
         image = image['data']
         image = np.hstack([image, np.zeros([511, 53])])
         image = np.hstack([np.zeros([511, 54]), image])
@@ -521,10 +521,10 @@ def train_generator_A(optimizer_A,optimizer_B, real_A,fake_A,fake_B,recycle_A,re
 
     #GDL loss
     error_gradient = gradient_loss(fake_A,real_A)
-    print('error_gradient',error_gradient)
+    #print('error_gradient',error_gradient)
     error = error_gen_A+error_gen_B
     total_error = error+error_A+error_voxel+error_gradient
-    print('error', error_A,error_gen_A,error_gen_B,error_voxel,error_gradient)
+    #print('error', error_A,error_gen_A,error_gen_B,error_voxel,error_gradient)
     total_error.backward()
 
     # Update weights with gradients
@@ -612,10 +612,10 @@ for epoch in range(num_epochs):
         #Log batch error
         #logger.log(d_error, g_error, epoch, n_batch, num_batches)
         #Display Progress every few batches
-        if (n_batch) % 100 == 0:
+        #if (n_batch) % 100 == 0:
             # test_images = real_data#vectors_to_images(generator(test_noise))
             # test_images = test_images.data
-            print(epoch, d_error_B, g_error_B)
+           # print(epoch, d_error_B, g_error_B)
             # logger.log_images(
             #     test_images, num_test_samples,
             #     epoch, n_batch, num_batches
@@ -626,12 +626,5 @@ for epoch in range(num_epochs):
             #     d_error, g_error, d_pred_real, d_pred_fake
             # )
 
-    if epoch is 10:
-        fake_B = generator_B(real_A)
-        for i in range(10):
-            print(fake_B[i].data.numpy())
-            image = fake_B[i].data.numpy()
-            image = image.reshape(512, 512)
-            print(image.shape)
-            scipy.io.savemat("./result/" + str(i), {'image': image})
+    
             # np.savetxt("./result/" + str(i) + ".txt", image)
