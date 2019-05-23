@@ -2,8 +2,10 @@ import torch
 from torch import nn, optim
 from torch.autograd.variable import Variable
 import os
-
+from model import Generater
 import scipy.io
+import cv2
+from PIL import Image
 
 import numpy as np
 #from utils import Logger
@@ -12,51 +14,50 @@ import numpy as np
 
 from torchvision import transforms, datasets
 
-def mnist_data():
-    compose = transforms.Compose(
-        [transforms.ToTensor(),
-         transforms.Normalize((.5, .5, .5), (.5, .5, .5))
-        ])
-    out_dir = './dataset'
-    return datasets.MNIST(root=out_dir, train=True, transform=compose, download=True)
-
-
-# Load data
-#data = mnist_data()
-# Create loader with data, so that we can iterate over it
-#data_loader = torch.utils.data.DataLoader(data, batch_size=100, shuffle=True)
+# def mnist_data():
+#     compose = transforms.Compose(
+#         [transforms.ToTensor(),
+#          transforms.Normalize((.5, .5, .5), (.5, .5, .5))
+#         ])
+#     out_dir = './dataset'
+#     return datasets.MNIST(root=out_dir, train=True, transform=compose, download=True)
+#
+#
+# # Load data
+# data = mnist_data()
+# # Create loader with data, so that we can iterate over it
+# data_loader = torch.utils.data.DataLoader(data, batch_size=100, shuffle=True)
 # Num batches
 #num_batches = len(data_loader)
 def load_data():
     # images_A = scipy.io.loadmat('./CT-MRI_data/CT/CT.mat')
     # images_A = images_A['data']
-    path, dirs, files = os.walk("./dataset/MRI").__next__()
+    path, dirs, files = os.walk("./CT-MRI_data/MRI").__next__()
     file_count = len(files)
     images_B = []
     for i in range(file_count):
-        image= scipy.io.loadmat('./dataset/MRI/'+files[i])
+        image= scipy.io.loadmat('./CT-MRI_data/MRI/'+files[i])
         image = image['data']
 
         image = np.hstack([image, np.zeros([511, 53])])
         image = np.hstack([np.zeros([511, 54]),image])
         image = np.append(image, np.zeros([1,512]), axis=0)
-
-
+        image *= 255.0 / image.max()
         image = image.reshape(1,512,512)
         images_B.append(image)
 
     images_B=np.array(images_B)
-    path, dirs, files = os.walk("./dataset/CT").__next__()
+    path, dirs, files = os.walk("./CT-MRI_data/CT").__next__()
     file_count = len(files)
     images_A = []
 
     for i in range(file_count):
-        image= scipy.io.loadmat('./dataset/CT/'+files[i])
+        image= scipy.io.loadmat('./CT-MRI_data/CT/'+files[i])
         image = image['data']
         image = np.hstack([image, np.zeros([511, 53])])
         image = np.hstack([np.zeros([511, 54]), image])
         image = np.append(image, np.zeros([1, 512]), axis=0)
-
+        image *= 255.0 / image.max()
         image = image.reshape(1, 512, 512)
         images_A.append(image)
     # images_A=np.swapaxes(images_A, 0, 2)
@@ -66,8 +67,8 @@ def load_data():
 data_A,data_B = load_data()
 test_image = data_A[0:10]
 
-data_loader_A = torch.utils.data.DataLoader(data_A, batch_size=20, shuffle=True)
-data_loader_B = torch.utils.data.DataLoader(data_B, batch_size=20, shuffle=True)
+data_loader_A = torch.utils.data.DataLoader(data_A, batch_size=1, shuffle=True)
+data_loader_B = torch.utils.data.DataLoader(data_B, batch_size=1, shuffle=True)
 
 class DiscriminatorNet_A(torch.nn.Module):
     """
@@ -131,7 +132,7 @@ class DiscriminatorNet_A(torch.nn.Module):
         x = self.hidden5(x)
         x = self.hidden6(x)
         x = self.out(x)
-        x = x.reshape(x.size()[0],1)
+        x = x.reshape(1,1) #4->1
 
         return x
     # def __init__(self):
@@ -231,7 +232,7 @@ class DiscriminatorNet_B(torch.nn.Module):
         x = self.hidden5(x)
         x = self.hidden6(x)
         x = self.out(x)
-        x = x.reshape(x.size()[0], 1)
+        x = x.reshape(1, 1)
         return x
 
 
@@ -296,7 +297,8 @@ class GeneratorNet_A(torch.nn.Module):
         return x
 
 
-generator_A = GeneratorNet_A()
+#generator_A = GeneratorNet_A()
+generator_A = Generater()
 
 class GeneratorNet_B(torch.nn.Module):
     """
@@ -377,8 +379,8 @@ class GeneratorNet_B(torch.nn.Module):
     #     return x
 
 
-generator_B = GeneratorNet_B()
-
+#generator_B = GeneratorNet_B()
+generator_B = Generater()
 def noise(size):
     '''
     Generates a 1-d vector of gaussian sampled random values
@@ -392,7 +394,36 @@ g_optimizer_A = optim.Adam(generator_A.parameters(), lr=0.0002)
 g_optimizer_B = optim.Adam(generator_B.parameters(), lr=0.0002)
 
 loss = nn.BCELoss()
-generator_loss = torch.nn.L1Loss()
+generator_loss = torch.nn.L1Loss()#(reduction = 'sum')
+Mseloss = nn.MSELoss()#(reduction = 'sum')
+def gradient(image):
+    a = np.array([[1, 0, -1],[2,0,-2],[1,0,-1]])
+    conv1 = nn.Conv2d(1, 1, kernel_size=3, stride=1, padding=1, bias=False)
+    conv1.weight = nn.Parameter(torch.from_numpy(a).float().unsqueeze(0).unsqueeze(0))
+    G_x = conv1(Variable(image)).data.view(1, 512, 512)
+    b = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]])
+    conv2 = nn.Conv2d(1, 1, kernel_size=3, stride=1, padding=1, bias=False)
+    conv2.weight = nn.Parameter(torch.from_numpy(b).float().unsqueeze(0).unsqueeze(0))
+    G_y = conv2(Variable(image)).data.view(1, 512, 512)
+    G = torch.sqrt(torch.pow(G_x, 2) + torch.pow(G_y, 2))
+    return G
+def gradient_calculate(image):
+    image = image.data.numpy()
+
+    image = image.reshape(512, 512)
+    #image = Image.fromarray(image, 'L')
+    gradient = np.gradient(image)[0]
+    scipy.io.savemat("./result/" + str(i), {'image': gradient})
+
+    return gradient
+
+def gradient_loss(fake,real):
+    fake_gra= gradient_calculate(fake)
+    fake_gra = torch.from_numpy(fake_gra)
+    real_gra = gradient_calculate(real)
+    real_gra = torch.from_numpy(real_gra)
+    return Mseloss(real_gra,fake_gra)
+
 def ones_target(size):
     '''
     Tensor containing ones, with shape = size
@@ -472,27 +503,28 @@ def train_discriminator_B(optimizer_A,optimazer_B, real_A,fake_A,real_B, fake_B,
     return (error_real_B + error_fake_B)*0.5, prediction_real_B, prediction_fake_B  # not sure
 
 
-def train_generator_A(optimizer_A,optimizer_B, fake_A,fake_B,recycle_A,recycle_B):
+def train_generator_A(optimizer_A,optimizer_B, real_A,fake_A,fake_B,recycle_A,recycle_B):
     N = real_A.size()[0]
     # Reset gradients
 
     optimizer_A.zero_grad()
-    #optimizer_B.zero_grad()
     # Sample noise and generate fake data
     prediction_A = discriminator_A(fake_A.detach())
-    #prediction_B = discriminator_B(fake_B)
-    # Calculate error and backpropagate
-    error_A = loss(prediction_A, ones_target(N))
-    #error_B = loss(prediction_B, ones_target(N))
-    #error_A.backward()
-    #error_B.backward()
-
+    error_A = loss(prediction_A, ones_target(N))*10
     # calculate generator_error and backpropogate
 
-    error_gen_A = generator_loss(recycle_A, real_A)*0.01
-    error_gen_B = generator_loss(recycle_B, real_B) *0.01
+    error_gen_A = generator_loss(recycle_A, real_A)
+    error_gen_B = generator_loss(recycle_B, real_B)
+
+    #voxel-wise
+    error_voxel =  generator_loss(real_A,fake_A)
+
+    #GDL loss
+    error_gradient = gradient_loss(fake_A,real_A)
+    print('error_gradient',error_gradient)
     error = error_gen_A+error_gen_B
-    total_error = error+error_A
+    total_error = error+error_A+error_voxel+error_gradient
+    print('error', error_A,error_gen_A,error_gen_B,error_voxel,error_gradient)
     total_error.backward()
 
     # Update weights with gradients
@@ -501,7 +533,7 @@ def train_generator_A(optimizer_A,optimizer_B, fake_A,fake_B,recycle_A,recycle_B
     # Return error
     return total_error  #not finished
 
-def train_generator_B(optimizer_A,optimizer_B, fake_A,fake_B,recycle_A,recycle_B):
+def train_generator_B(optimizer_A,optimizer_B, fake_A,real_B,fake_B,recycle_A,recycle_B):
     N = real_A.size()[0]
 
     # Reset gradients
@@ -512,16 +544,20 @@ def train_generator_B(optimizer_A,optimizer_B, fake_A,fake_B,recycle_A,recycle_B
     prediction_B = discriminator_B(fake_B.detach())
     # Calculate error and backpropagate
     #error_A = loss(prediction_A, ones_target(N))
-    error_B = loss(prediction_B, ones_target(N))
+    error_B = loss(prediction_B, ones_target(N))*10
     #error_A.backward()
     #error_B.backward()
 
     # calculate generator_error and backpropogate
 
-    error_gen_A = generator_loss(recycle_A.detach(), real_A.detach())*0.01
-    error_gen_B = generator_loss(recycle_B.detach(), real_B.detach())*0.01
+    error_gen_A = generator_loss(recycle_A.detach(), real_A.detach())
+    error_gen_B = generator_loss(recycle_B.detach(), real_B.detach())
     error = error_gen_A+error_gen_B
-    total_error=error+error_B
+    error_voxel = generator_loss(real_B, fake_B)
+    # GDL loss
+    error_gradient = gradient_loss(fake_B, real_B)
+    total_error=error+error_B+error_voxel+error_gradient
+
     total_error.backward()
 
     # Update weights with gradients
@@ -532,7 +568,7 @@ def train_generator_B(optimizer_A,optimizer_B, fake_A,fake_B,recycle_A,recycle_B
 
 num_test_samples = 16
 test_noise = noise(num_test_samples)
-
+i = 0
 # Create logger instance
 #logger = Logger(model_name='VGAN', data_name='MNIST')
 # Total number of epochs to train
@@ -547,7 +583,15 @@ for epoch in range(num_epochs):
         # (so gradients are not calculated for generator)
         fake_A = generator_A(real_B).detach()    #.detach()
         fake_B = generator_B(real_A).detach()
-        
+        image = fake_B.data.numpy()
+        image = image.reshape(512, 512)
+        scipy.io.savemat("./result_MRI/" + str(i), {'image': image})
+        image = fake_A.data.numpy()
+        image = image.reshape(512, 512)
+        scipy.io.savemat("./result_CT/" + str(i), {'image': image})
+        print('get', i)
+        i = (i + 1)%251
+
         #recycle
         recycle_A = generator_A(fake_B).detach()
         recycle_B = generator_B(fake_A).detach()
@@ -562,13 +606,13 @@ for epoch in range(num_epochs):
         # Generate fake data
         #fake_data = generator(noise(N))
         # Train G
-        g_error_A = train_generator_A(g_optimizer_A, g_optimizer_B, fake_A, fake_B,recycle_A,recycle_B)  # fake_data)
-        g_error_B = train_generator_B(g_optimizer_A,g_optimizer_B, fake_A,fake_B,recycle_A,recycle_B)#fake_data)
-        #print(epoch, d_error_B, g_error_B)
+        g_error_A = train_generator_A(g_optimizer_A, g_optimizer_B, real_A,fake_A, fake_B,recycle_A,recycle_B)  # fake_data)
+        g_error_B = train_generator_B(g_optimizer_A,g_optimizer_B, fake_A,real_B,fake_B,recycle_A,recycle_B)#fake_data)
+        print(epoch, d_error_B, g_error_B)
         #Log batch error
         #logger.log(d_error, g_error, epoch, n_batch, num_batches)
         #Display Progress every few batches
-        if (n_batch) % 12 == 0:
+        if (n_batch) % 100 == 0:
             # test_images = real_data#vectors_to_images(generator(test_noise))
             # test_images = test_images.data
             print(epoch, d_error_B, g_error_B)
@@ -582,12 +626,12 @@ for epoch in range(num_epochs):
             #     d_error, g_error, d_pred_real, d_pred_fake
             # )
 
-    if epoch is 40:
+    if epoch is 10:
         fake_B = generator_B(real_A)
-        for i in range(20):
+        for i in range(10):
             print(fake_B[i].data.numpy())
             image = fake_B[i].data.numpy()
             image = image.reshape(512, 512)
             print(image.shape)
-            scipy.io.savemat("./result/" + str(i) , {'image': image})
+            scipy.io.savemat("./result/" + str(i), {'image': image})
             # np.savetxt("./result/" + str(i) + ".txt", image)
