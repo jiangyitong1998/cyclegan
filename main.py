@@ -32,33 +32,36 @@ from torchvision import transforms, datasets
 def load_data():
     # images_A = scipy.io.loadmat('./CT-MRI_data/CT/CT.mat')
     # images_A = images_A['data']
-    path, dirs, files = os.walk("./dataset/MRI").__next__()
+    path, dirs, files = os.walk("./CT-MRI_data/MRI").__next__()
     file_count = len(files)
     images_B = []
     for i in range(file_count):
-        image= scipy.io.loadmat('./dataset/MRI/'+files[i])
+        image= scipy.io.loadmat('./CT-MRI_data/MRI/'+files[i])
+        #print(files[i])
         image = image['data']
+        #scipy.io.savemat('./result_MRI/' + str(i)+'file', {'imagefile'+str(i): image})
+        # image = np.hstack([image, np.zeros([511, 53])])
+        # image = np.hstack([np.zeros([511, 54]),image])
+        # image = np.append(image, np.zeros([1,512]), axis=0)
+        # image *= (255.0 / image.max())
+        #scipy.io.savemat("./result_MRI/" + str(i), {'image'+str(i): image})
 
-        image = np.hstack([image, np.zeros([511, 53])])
-        image = np.hstack([np.zeros([511, 54]),image])
-        image = np.append(image, np.zeros([1,512]), axis=0)
-        image *= 255.0 / image.max()
-        image = image.reshape(1,512,512)
+        image = image.reshape(1,128,128)
         images_B.append(image)
 
     images_B=np.array(images_B)
-    path, dirs, files = os.walk("./dataset/CT").__next__()
+    path, dirs, files = os.walk("./CT-MRI_data/CT").__next__()
     file_count = len(files)
     images_A = []
 
     for i in range(file_count):
-        image= scipy.io.loadmat('./dataset/CT/'+files[i])
+        image= scipy.io.loadmat('./CT-MRI_data/CT/'+files[i])
         image = image['data']
-        image = np.hstack([image, np.zeros([511, 53])])
-        image = np.hstack([np.zeros([511, 54]), image])
-        image = np.append(image, np.zeros([1, 512]), axis=0)
-        image *= 255.0 / image.max()
-        image = image.reshape(1, 512, 512)
+        # image = np.hstack([image, np.zeros([511, 53])])
+        # image = np.hstack([np.zeros([511, 54]), image])
+        # image = np.append(image, np.zeros([1, 512]), axis=0)
+        # image *= (255.0 / image.max())
+        image = image.reshape(1, 128, 128)
         images_A.append(image)
     # images_A=np.swapaxes(images_A, 0, 2)
     # images_A=np.swapaxes(images_A, 1, 2)
@@ -98,22 +101,22 @@ class DiscriminatorNet_A(torch.nn.Module):
             nn.BatchNorm2d(ndf * 8),
             nn.LeakyReLU(0.2, inplace=True)
         )
+        # self.hidden4 = nn.Sequential(
+        #     nn.Conv2d(ndf * 8, ndf * 8, kernel_size=4, stride=2, padding=1),
+        #     nn.BatchNorm2d(ndf * 8),
+        #     nn.LeakyReLU(0.2, inplace=True)
+        # )
+        # self.hidden5 = nn.Sequential(
+        #     nn.Conv2d(ndf * 8, ndf * 8, kernel_size=4, stride=2, padding=1),
+        #     nn.BatchNorm2d(ndf * 8),
+        #     nn.LeakyReLU(0.2, inplace=True)
+        # )
+        # self.hidden6 = nn.Sequential(
+        #     nn.Conv2d(ndf * 8, ndf * 8, kernel_size=4, stride=2, padding=1),
+        #     nn.BatchNorm2d(ndf * 8),
+        #     nn.LeakyReLU(0.2, inplace=True)
+        # )
         self.hidden4 = nn.Sequential(
-            nn.Conv2d(ndf * 8, ndf * 8, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(ndf * 8),
-            nn.LeakyReLU(0.2, inplace=True)
-        )
-        self.hidden5 = nn.Sequential(
-            nn.Conv2d(ndf * 8, ndf * 8, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(ndf * 8),
-            nn.LeakyReLU(0.2, inplace=True)
-        )
-        self.hidden6 = nn.Sequential(
-            nn.Conv2d(ndf * 8, ndf * 8, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(ndf * 8),
-            nn.LeakyReLU(0.2, inplace=True)
-        )
-        self.hidden6 = nn.Sequential(
             nn.Conv2d(ndf * 8, ndf * 8, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(ndf * 8),
             nn.LeakyReLU(0.2, inplace=True)
@@ -129,8 +132,8 @@ class DiscriminatorNet_A(torch.nn.Module):
         x = self.hidden2(x)
         x = self.hidden3(x)
         x = self.hidden4(x)
-        x = self.hidden5(x)
-        x = self.hidden6(x)
+        # x = self.hidden5(x)
+        # x = self.hidden6(x)
         x = self.out(x)
         x = x.reshape(1,1) #4->1
 
@@ -198,22 +201,22 @@ class DiscriminatorNet_B(torch.nn.Module):
             nn.BatchNorm2d(ndf * 8),
             nn.LeakyReLU(0.2, inplace=True)
         )
+        # self.hidden4 = nn.Sequential(
+        #     nn.Conv2d(ndf * 8, ndf * 8, kernel_size=4, stride=2, padding=1),
+        #     nn.BatchNorm2d(ndf * 8),
+        #     nn.LeakyReLU(0.2, inplace=True)
+        # )
+        # self.hidden5 = nn.Sequential(
+        #     nn.Conv2d(ndf * 8, ndf * 8, kernel_size=4, stride=2, padding=1),
+        #     nn.BatchNorm2d(ndf * 8),
+        #     nn.LeakyReLU(0.2, inplace=True)
+        # )
+        # self.hidden6 = nn.Sequential(
+        #     nn.Conv2d(ndf * 8, ndf * 8, kernel_size=4, stride=2, padding=1),
+        #     nn.BatchNorm2d(ndf * 8),
+        #     nn.LeakyReLU(0.2, inplace=True)
+        # )
         self.hidden4 = nn.Sequential(
-            nn.Conv2d(ndf * 8, ndf * 8, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(ndf * 8),
-            nn.LeakyReLU(0.2, inplace=True)
-        )
-        self.hidden5 = nn.Sequential(
-            nn.Conv2d(ndf * 8, ndf * 8, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(ndf * 8),
-            nn.LeakyReLU(0.2, inplace=True)
-        )
-        self.hidden6 = nn.Sequential(
-            nn.Conv2d(ndf * 8, ndf * 8, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(ndf * 8),
-            nn.LeakyReLU(0.2, inplace=True)
-        )
-        self.hidden6 = nn.Sequential(
             nn.Conv2d(ndf * 8, ndf * 8, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(ndf * 8),
             nn.LeakyReLU(0.2, inplace=True)
@@ -229,8 +232,8 @@ class DiscriminatorNet_B(torch.nn.Module):
         x = self.hidden2(x)
         x = self.hidden3(x)
         x = self.hidden4(x)
-        x = self.hidden5(x)
-        x = self.hidden6(x)
+        # x = self.hidden5(x)
+        # x = self.hidden6(x)
         x = self.out(x)
         x = x.reshape(1, 1)
         return x
@@ -396,31 +399,33 @@ g_optimizer_B = optim.Adam(generator_B.parameters(), lr=0.0002)
 loss = nn.BCELoss()
 generator_loss = torch.nn.L1Loss()#(reduction = 'sum')
 Mseloss = nn.MSELoss()#(reduction = 'sum')
-def gradient(image):
-    a = np.array([[1, 0, -1],[2,0,-2],[1,0,-1]])
-    conv1 = nn.Conv2d(1, 1, kernel_size=3, stride=1, padding=1, bias=False)
-    conv1.weight = nn.Parameter(torch.from_numpy(a).float().unsqueeze(0).unsqueeze(0))
-    G_x = conv1(Variable(image)).data.view(1, 512, 512)
-    b = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]])
-    conv2 = nn.Conv2d(1, 1, kernel_size=3, stride=1, padding=1, bias=False)
-    conv2.weight = nn.Parameter(torch.from_numpy(b).float().unsqueeze(0).unsqueeze(0))
-    G_y = conv2(Variable(image)).data.view(1, 512, 512)
-    G = torch.sqrt(torch.pow(G_x, 2) + torch.pow(G_y, 2))
-    return G
+# def gradient(image):
+#     a = np.array([[1, 0, -1],[2,0,-2],[1,0,-1]])
+#     conv1 = nn.Conv2d(1, 1, kernel_size=3, stride=1, padding=1, bias=False)
+#     conv1.weight = nn.Parameter(torch.from_numpy(a).float().unsqueeze(0).unsqueeze(0))
+#     G_x = conv1(Variable(image)).data.view(1, 512, 512)
+#     b = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]])
+#     conv2 = nn.Conv2d(1, 1, kernel_size=3, stride=1, padding=1, bias=False)
+#     conv2.weight = nn.Parameter(torch.from_numpy(b).float().unsqueeze(0).unsqueeze(0))
+#     G_y = conv2(Variable(image)).data.view(1, 512, 512)
+#     G = torch.sqrt(torch.pow(G_x, 2) + torch.pow(G_y, 2))
+#     return G
 def gradient_calculate(image):
     image = image.data.numpy()
 
-    image = image.reshape(512, 512)
+    image = image.reshape(128, 128)
     #image = Image.fromarray(image, 'L')
     gradient = np.gradient(image)[0]
-    scipy.io.savemat("./result/" + str(i), {'image': gradient})
+
 
     return gradient
 
 def gradient_loss(fake,real):
     fake_gra= gradient_calculate(fake)
+    #scipy.io.savemat("./result/" + str(i)+'fake', {'image': fake_gra})
     fake_gra = torch.from_numpy(fake_gra)
     real_gra = gradient_calculate(real)
+    #scipy.io.savemat("./result/" + str(i)+'real', {'image': real_gra})
     real_gra = torch.from_numpy(real_gra)
     return Mseloss(real_gra,fake_gra)
 
@@ -510,28 +515,28 @@ def train_generator_A(optimizer_A,optimizer_B, real_A,fake_A,fake_B,recycle_A,re
     optimizer_A.zero_grad()
     # Sample noise and generate fake data
     prediction_A = discriminator_A(fake_A.detach())
-    error_A = loss(prediction_A, ones_target(N))*10
+    error_A = loss(prediction_A, ones_target(N))*0.01
     # calculate generator_error and backpropogate
 
-    error_gen_A = generator_loss(recycle_A, real_A)
-    error_gen_B = generator_loss(recycle_B, real_B)
+    error_gen_A = generator_loss(recycle_A, real_A)*0.1
+    error_gen_B = generator_loss(recycle_B, real_B)*0.1
 
     #voxel-wise
     error_voxel =  generator_loss(real_A,fake_A)
 
     #GDL loss
-    error_gradient = gradient_loss(fake_A,real_A)
+    error_gradient = gradient_loss(fake_A,real_A)*0.1
     #print('error_gradient',error_gradient)
     error = error_gen_A+error_gen_B
     total_error = error+error_A+error_voxel+error_gradient
-    #print('error', error_A,error_gen_A,error_gen_B,error_voxel,error_gradient)
+
     total_error.backward()
 
     # Update weights with gradients
     optimizer_A.step()
     #optimizer_B.step()
     # Return error
-    return total_error  #not finished
+    return error_A,error,error_voxel,error_gradient #not finished
 
 def train_generator_B(optimizer_A,optimizer_B, fake_A,real_B,fake_B,recycle_A,recycle_B):
     N = real_A.size()[0]
@@ -544,7 +549,7 @@ def train_generator_B(optimizer_A,optimizer_B, fake_A,real_B,fake_B,recycle_A,re
     prediction_B = discriminator_B(fake_B.detach())
     # Calculate error and backpropagate
     #error_A = loss(prediction_A, ones_target(N))
-    error_B = loss(prediction_B, ones_target(N))*10
+    error_B = loss(prediction_B, ones_target(N))*0.01
     #error_A.backward()
     #error_B.backward()
 
@@ -552,19 +557,18 @@ def train_generator_B(optimizer_A,optimizer_B, fake_A,real_B,fake_B,recycle_A,re
 
     error_gen_A = generator_loss(recycle_A.detach(), real_A.detach())
     error_gen_B = generator_loss(recycle_B.detach(), real_B.detach())
-    error = error_gen_A+error_gen_B
+    error = (error_gen_A+error_gen_B)*0.1
     error_voxel = generator_loss(real_B, fake_B)
     # GDL loss
-    error_gradient = gradient_loss(fake_B, real_B)
+    error_gradient = gradient_loss(fake_B, real_B)*0.1
     total_error=error+error_B+error_voxel+error_gradient
-
     total_error.backward()
 
     # Update weights with gradients
     #optimizer_A.step(
     optimizer_B.step()
     # Return error
-    return total_error  #not finished
+    return error_B,error,error_voxel,error_gradient
 
 num_test_samples = 16
 test_noise = noise(num_test_samples)
@@ -574,6 +578,11 @@ i = 0
 # Total number of epochs to train
 num_epochs = 50
 for epoch in range(num_epochs):
+    d_error_B=0
+    error_deB=0
+    error_genB=0
+    error_voxel_B=0
+    error_gradient_B=0
     for n_batch, data in enumerate(zip(data_loader_A,data_loader_B),0):
         # 1. Train Discriminator
         real_A,real_B = data
@@ -584,12 +593,12 @@ for epoch in range(num_epochs):
         fake_A = generator_A(real_B).detach()    #.detach()
         fake_B = generator_B(real_A).detach()
         image = fake_B.data.numpy()
-        image = image.reshape(512, 512)
-        scipy.io.savemat("./result_MRI/" + str(i), {'image': image})
+        image = image.reshape(128, 128)
+        scipy.io.savemat("./result_MRI/" + str(i), {'image'+str(i): image})
         image = fake_A.data.numpy()
-        image = image.reshape(512, 512)
-        scipy.io.savemat("./result_CT/" + str(i), {'image': image})
-        print('get', i)
+        image = image.reshape(128, 128)
+        scipy.io.savemat("./result_CT/" + str(i), {'image'+str(i): image})
+        
         i = (i + 1)%251
 
         #recycle
@@ -606,16 +615,16 @@ for epoch in range(num_epochs):
         # Generate fake data
         #fake_data = generator(noise(N))
         # Train G
-        g_error_A = train_generator_A(g_optimizer_A, g_optimizer_B, real_A,fake_A, fake_B,recycle_A,recycle_B)  # fake_data)
-        g_error_B = train_generator_B(g_optimizer_A,g_optimizer_B, fake_A,real_B,fake_B,recycle_A,recycle_B)#fake_data)
-        print(epoch, d_error_B, g_error_B)
+        error_deA, error_genA, error_voxel_A, error_gradient_A = train_generator_A(g_optimizer_A, g_optimizer_B, real_A,fake_A, fake_B,recycle_A,recycle_B)  # fake_data)
+        error_deB, error_genB, error_voxel_B, error_gradient_B = train_generator_B(g_optimizer_A,g_optimizer_B, fake_A,real_B,fake_B,recycle_A,recycle_B)#fake_data)
+
         #Log batch error
         #logger.log(d_error, g_error, epoch, n_batch, num_batches)
         #Display Progress every few batches
-        #if (n_batch) % 100 == 0:
+
             # test_images = real_data#vectors_to_images(generator(test_noise))
             # test_images = test_images.data
-           # print(epoch, d_error_B, g_error_B)
+    print(epoch, d_error_B, error_deB, error_genB, error_voxel_B, error_gradient_B)
             # logger.log_images(
             #     test_images, num_test_samples,
             #     epoch, n_batch, num_batches
@@ -626,5 +635,3 @@ for epoch in range(num_epochs):
             #     d_error, g_error, d_pred_real, d_pred_fake
             # )
 
-    
-            # np.savetxt("./result/" + str(i) + ".txt", image)
