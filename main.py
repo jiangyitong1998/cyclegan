@@ -32,11 +32,11 @@ from torchvision import transforms, datasets
 def load_data():
     # images_A = scipy.io.loadmat('./CT-MRI_data/CT/CT.mat')
     # images_A = images_A['data']
-    path, dirs, files = os.walk("./CT-MRI_data/MRI").__next__()
+    path, dirs, files = os.walk("cyclegan/cyclegan/dataset/MRI_resize").__next__()
     file_count = len(files)
     images_B = []
     for i in range(file_count):
-        image= scipy.io.loadmat('./CT-MRI_data/MRI/'+files[i])
+        image= scipy.io.loadmat('cyclegan/cyclegan/dataset/MRI_resize/'+files[i])
         #print(files[i])
         image = image['data']
         #scipy.io.savemat('./result_MRI/' + str(i)+'file', {'imagefile'+str(i): image})
@@ -50,12 +50,12 @@ def load_data():
         images_B.append(image)
 
     images_B=np.array(images_B)
-    path, dirs, files = os.walk("./CT-MRI_data/CT").__next__()
+    path, dirs, files = os.walk("cyclegan/cyclegan/dataset/CT_resize").__next__()
     file_count = len(files)
     images_A = []
 
     for i in range(file_count):
-        image= scipy.io.loadmat('./CT-MRI_data/CT/'+files[i])
+        image= scipy.io.loadmat('cyclegan/cyclegan/dataset/CT_resize/'+files[i])
         image = image['data']
         # image = np.hstack([image, np.zeros([511, 53])])
         # image = np.hstack([np.zeros([511, 54]), image])
@@ -594,10 +594,10 @@ for epoch in range(num_epochs):
         fake_B = generator_B(real_A).detach()
         image = fake_B.data.numpy()
         image = image.reshape(128, 128)
-        scipy.io.savemat("./result_MRI/" + str(i), {'image'+str(i): image})
+        scipy.io.savemat("cyclegan/cyclegan/result_MRI/" + str(i), {'image'+str(i): image})
         image = fake_A.data.numpy()
         image = image.reshape(128, 128)
-        scipy.io.savemat("./result_CT/" + str(i), {'image'+str(i): image})
+        scipy.io.savemat("cyclegan/cyclegan/result_CT/" + str(i), {'image'+str(i): image})
         
         i = (i + 1)%251
 
