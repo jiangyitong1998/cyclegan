@@ -625,6 +625,9 @@ for epoch in range(num_epochs):
             # test_images = real_data#vectors_to_images(generator(test_noise))
             # test_images = test_images.data
     print(epoch, d_error_B, error_deB, error_genB, error_voxel_B, error_gradient_B)
+    path = 'cyclegan/cyclegan/'
+    torch.save(generator_B.state_dict(), path)	
+
             # logger.log_images(
             #     test_images, num_test_samples,
             #     epoch, n_batch, num_batches
