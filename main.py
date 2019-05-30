@@ -30,13 +30,13 @@ from torchvision import transforms, datasets
 # Num batches
 #num_batches = len(data_loader)
 def load_data():
-    # images_A = scipy.io.loadmat('./CT-MRI_data/CT/CT.mat')
+    # images_A = scipy.io.loadmat('cyclegan/dataset/CT/CT.mat')
     # images_A = images_A['data']
-    path, dirs, files = os.walk("cyclegan/cyclegan/dataset/MRI_resize").__next__()
+    path, dirs, files = os.walk("cyclegan/dataset/MRI_resize").__next__()
     file_count = len(files)
     images_B = []
     for i in range(file_count):
-        image= scipy.io.loadmat('cyclegan/cyclegan/dataset/MRI_resize/'+files[i])
+        image= scipy.io.loadmat('cyclegan/dataset/MRI_resize/'+files[i])
         #print(files[i])
         image = image['data']
         #scipy.io.savemat('./result_MRI/' + str(i)+'file', {'imagefile'+str(i): image})
@@ -50,12 +50,12 @@ def load_data():
         images_B.append(image)
 
     images_B=np.array(images_B)
-    path, dirs, files = os.walk("cyclegan/cyclegan/dataset/CT_resize").__next__()
+    path, dirs, files = os.walk("cyclegan/dataset/CT_resize").__next__()
     file_count = len(files)
     images_A = []
 
     for i in range(file_count):
-        image= scipy.io.loadmat('cyclegan/cyclegan/dataset/CT_resize/'+files[i])
+        image= scipy.io.loadmat('cyclegan/dataset/CT_resize/'+files[i])
         image = image['data']
         # image = np.hstack([image, np.zeros([511, 53])])
         # image = np.hstack([np.zeros([511, 54]), image])
@@ -594,10 +594,10 @@ for epoch in range(num_epochs):
         fake_B = generator_B(real_A).detach()
         image = fake_B.data.numpy()
         image = image.reshape(128, 128)
-        scipy.io.savemat("cyclegan/cyclegan/result_MRI/" + str(i), {'image'+str(i): image})
+        scipy.io.savemat("cyclegan/result_MRI/" + str(i), {'image'+str(i): image})
         image = fake_A.data.numpy()
         image = image.reshape(128, 128)
-        scipy.io.savemat("cyclegan/cyclegan/result_CT/" + str(i), {'image'+str(i): image})
+        scipy.io.savemat("cyclegan/result_CT/" + str(i), {'image'+str(i): image})
         
         i = (i + 1)%251
 
@@ -625,8 +625,8 @@ for epoch in range(num_epochs):
             # test_images = real_data#vectors_to_images(generator(test_noise))
             # test_images = test_images.data
     print(epoch, d_error_B, error_deB, error_genB, error_voxel_B, error_gradient_B)
-    path = 'cyclegan/cyclegan/'
-    torch.save(generator_B.state_dict(), path)	
+    #path = 'cyclegan/cyclegan/'
+    #torch.save(generator_B.state_dict(), path)	
 
             # logger.log_images(
             #     test_images, num_test_samples,
