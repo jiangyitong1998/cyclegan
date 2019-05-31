@@ -66,34 +66,34 @@ class Generater(nn.Module):
         self.tanh = nn.Tanh()
 
         # encoding layers
-        self.conv1 = ConvLayer(1, 32, kernel_size=9, stride=1)
+        self.conv1 = ConvLayer(1, 32, kernel_size=7, stride=1)
         self.in1_e = nn.InstanceNorm2d(32, affine=True)
 
-        self.conv2 = ConvLayer(32, 64, kernel_size=3, stride=2)
+        self.conv2 = ConvLayer(32, 64, kernel_size=3, stride=1)
         self.in2_e = nn.InstanceNorm2d(64, affine=True)
 
-        self.conv3 = ConvLayer(64, 128, kernel_size=3, stride=2)
-        self.in3_e = nn.InstanceNorm2d(128, affine=True)
+        self.conv3 = ConvLayer(64, 64, kernel_size=3, stride=1)
+        self.in3_e = nn.InstanceNorm2d(64, affine=True)
 
         # residual layers
-        self.res1 = ResidualBlock(128)
-        self.res2 = ResidualBlock(128)
-        self.res3 = ResidualBlock(128)
-        self.res4 = ResidualBlock(128)
-        self.res5 = ResidualBlock(128)
-        self.res6 = ResidualBlock(128)
-        self.res7 = ResidualBlock(128)
-        self.res8 = ResidualBlock(128)
-        self.res9 = ResidualBlock(128)
+        self.res1 = ResidualBlock(64)
+        self.res2 = ResidualBlock(64)
+        self.res3 = ResidualBlock(64)
+        self.res4 = ResidualBlock(64)
+        self.res5 = ResidualBlock(64)
+        self.res6 = ResidualBlock(64)
+        self.res7 = ResidualBlock(64)
+        self.res8 = ResidualBlock(64)
+        self.res9 = ResidualBlock(64)
 
         # decoding layers
-        self.deconv3 = UpsampleConvLayer(128, 64, kernel_size=3, stride=1, upsample=2)
+        self.deconv3 = ConvLayer(64, 64, kernel_size=3, stride=1)
         self.in3_d = nn.InstanceNorm2d(64, affine=True)
 
-        self.deconv2 = UpsampleConvLayer(64, 32, kernel_size=3, stride=1, upsample=2)
+        self.deconv2 =ConvLayer(64, 32, kernel_size=3, stride=1)
         self.in2_d = nn.InstanceNorm2d(32, affine=True)
 
-        self.deconv1 = UpsampleConvLayer(32, 1, kernel_size=9, stride=1)
+        self.deconv1 =ConvLayer(32, 1, kernel_size=7)
         self.in1_d = nn.InstanceNorm2d(1, affine=True)
 
     def forward(self, x):
